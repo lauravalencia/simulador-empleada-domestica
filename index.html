@@ -25,7 +25,7 @@
       color: var(--ink);
       font: 16px/1.45 ui-sans-serif, system-ui, sans-serif;
     }
-    main { max-width: 920px; margin: 0 auto; padding: 32px 18px 64px; }
+    main { max-width: 980px; margin: 0 auto; padding: 32px 18px 64px; }
     h1 { font-size: 1.7rem; line-height: 1.15; margin: 0 0 8px; }
     h2 { font-size: 1.05rem; margin: 0 0 12px; }
     p { margin: 0; }
@@ -64,7 +64,9 @@
     .dates time { color: var(--muted); }
     table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
     th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
-    td.num, th.num { text-align: right; white-space: nowrap; }
+    td.num, th.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    tr.total td { font-weight: 650; border-bottom: 0; }
+    .scroll { overflow-x: auto; padding: 4px 12px 8px; }
     details { margin-top: 14px; }
     summary { cursor: pointer; font-weight: 650; }
     .note, .warn { padding: 14px 16px; margin-top: 14px; }
@@ -141,6 +143,28 @@
     <section>
       <h2>Flujo de caja mes a mes</h2>
       <div id="months"></div>
+    </section>
+
+    <section>
+      <h2>Lo que ella recibe cada mes</h2>
+      <p class="hint">Salario después del descuento de pensión, y de salud si la pagas, más el auxilio. La prima, los intereses de cesantías y las vacaciones entran en el mes en que se pagan. Las cesantías van al fondo y la dotación es en especie: no están aquí.</p>
+      <div class="panel scroll" style="margin-top:10px">
+        <table>
+          <thead>
+            <tr>
+              <th>Mes</th>
+              <th class="num">Salario neto</th>
+              <th class="num">Auxilio</th>
+              <th class="num">Prima</th>
+              <th class="num">Intereses</th>
+              <th class="num">Vacaciones</th>
+              <th class="num">Recibe</th>
+            </tr>
+          </thead>
+          <tbody id="recibe"></tbody>
+        </table>
+      </div>
+      <p class="hint" id="recibeLater" style="margin-top:8px"></p>
     </section>
 
     <section>
@@ -299,9 +323,18 @@
       $("warn").textContent = low ? "Ese pago por día está por debajo del mínimo legal (" + cop(minDay) + ")." : "";
       const weekText = ["", "1 a 7 días: 1 semana", "8 a 14 días: 2 semanas", "15 a 21 días: 3 semanas", "más de 21 días: el mes completo"][c.weeks];
       $("baseLine").textContent = "Días al mes: " + c.daysMonth.toFixed(1).replace(".", ",") + ". Cotización " + weekText + ". Base mínima " + cop(c.floor) + ". Salario del mes " + cop(c.salary) + ". Ingreso base " + cop(c.ibc) + ". De ese salario se descuentan " + cop(c.ded) + (c.salud ? " (salud 4% y pensión 4%)." : " (pensión 4%).");
+      const payRows = c.rows.map((r) => {
+        const net = peso(r.net);
+        const aux = peso(c.aux);
+        const prima = peso(r.prima);
+        const intereses = peso(r.intereses);
+        const vac = peso(r.vac);
+        return { net, aux, prima, intereses, vac, recibe: net + aux + prima + intereses + vac, m: r.m, y: r.y };
+      });
+      const col = (k) => payRows.reduce((a, r) => a + r[k], 0);
       $("totals").innerHTML = [
         ["Sale de tu bolsillo en 12 meses", cop(c.out12), true],
-        ["Ella recibe en la mano", cop(c.hand12), false],
+        ["Ella recibe en la mano", cop(col("recibe")), false],
         ["Promedio al mes", cop(c.out12 / 12), false],
       ].map(([label, value, primary]) =>
         '<article class="stat' + (primary ? " primary" : "") + '"><span>' + label + '</span><strong>' + value + '</strong></article>'
@@ -311,6 +344,14 @@
       $("months").innerHTML = c.rows.map((r) =>
         '<article class="month"><b>' + MESES[r.m] + " " + r.y + '</b><b>' + cop(r.total) + '</b><div class="why">' + parts({ ...r, emp: c.emp.total, aux: c.aux, salary: c.salary }) + '</div></article>'
       ).join("");
+      const dash = (n) => (n ? cop(n) : "—");
+      $("recibe").innerHTML = payRows.map((r) =>
+        "<tr><td>" + MESES[r.m] + " " + r.y + "</td><td class='num'>" + cop(r.net) + "</td><td class='num'>" + cop(r.aux) + "</td><td class='num'>" + dash(r.prima) + "</td><td class='num'>" + dash(r.intereses) + "</td><td class='num'>" + dash(r.vac) + "</td><td class='num'>" + cop(r.recibe) + "</td></tr>"
+      ).join("") +
+        "<tr class='total'><td>Total</td><td class='num'>" + cop(col("net")) + "</td><td class='num'>" + cop(col("aux")) + "</td><td class='num'>" + cop(col("prima")) + "</td><td class='num'>" + cop(col("intereses")) + "</td><td class='num'>" + cop(col("vac")) + "</td><td class='num'>" + cop(col("recibe")) + "</td></tr>";
+      $("recibeLater").textContent = c.laterInt
+        ? "Fuera de estos 12 meses también recibe " + cop(c.laterInt) + " de intereses de cesantías, el 14 de febrero de " + c.later.map((x) => x.y).join(" y ") + "."
+        : "";
       const dates = [];
       const first = c.rows[0];
       dates.push([dateLabel(first.y, first.m, 1), "Inicio del contrato"]);
