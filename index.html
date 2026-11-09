@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Empleada doméstica por días</title>
+  <meta name="description" content="Estimación a 12 meses del costo de una empleada doméstica por días en Colombia. No es asesoría legal." />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f4ef;
+      --paper: #fffcf7;
+      --ink: #1c1917;
+      --muted: #57534e;
+      --line: #e7e0d6;
+      --accent: #9a3412;
+      --accent-soft: #ffedd5;
+      --warn: #7c2d12;
+      --warn-bg: #fff7ed;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.45 ui-sans-serif, system-ui, sans-serif;
+    }
+    main { max-width: 920px; margin: 0 auto; padding: 32px 18px 64px; }
+    h1 { font-size: 1.7rem; line-height: 1.15; margin: 0 0 8px; }
+    h2 { font-size: 1.05rem; margin: 0 0 12px; }
+    p { margin: 0; }
+    .lede { color: var(--muted); max-width: 62ch; }
+    form, .panel, .month, .note {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 16px; margin: 22px 0; }
+    label { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--muted); }
+    label.wide { grid-column: span 2; }
+    label.check { flex-direction: row; align-items: flex-start; gap: 8px; grid-column: span 4; color: var(--ink); font-size: 0.95rem; }
+    input, select, button {
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid #d6d3d1;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+    input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; }
+    button { cursor: pointer; background: transparent; }
+    .totals { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; }
+    .stat { padding: 16px; }
+    .stat strong { display: block; font-size: 1.45rem; letter-spacing: -0.03em; margin-top: 4px; }
+    .stat.primary { background: var(--ink); color: #faf7f2; border-color: var(--ink); }
+    .stat span, .hint { color: var(--muted); font-size: 0.82rem; }
+    .primary span { color: #d6d3d1; }
+    section { margin-top: 28px; }
+    .month { padding: 12px 14px; margin-top: 8px; display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; }
+    .month b { font-weight: 650; }
+    .month .why { grid-column: 1 / -1; color: var(--muted); font-size: 0.88rem; }
+    .dates { margin: 0; padding: 0; list-style: none; }
+    .dates li { display: grid; grid-template-columns: 11.5rem 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .dates time { color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    td.num, th.num { text-align: right; white-space: nowrap; }
+    details { margin-top: 14px; }
+    summary { cursor: pointer; font-weight: 650; }
+    .note, .warn { padding: 14px 16px; margin-top: 14px; }
+    .warn { background: var(--warn-bg); border-color: #fed7aa; color: var(--warn); }
+    .row-actions { display: flex; gap: 8px; align-items: center; }
+    @media (max-width: 760px) {
+      form, .totals { grid-template-columns: 1fr 1fr; }
+      label.wide, label.check { grid-column: span 2; }
+      .totals { grid-template-columns: 1fr; }
+      .dates li { grid-template-columns: 1fr; gap: 2px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Empleada doméstica por días</h1>
+    <p class="lede">Contrato indefinido, 12 meses. Valores de 2026 editables: cambia lo que quieras y todo se recalcula. Es una estimación, no asesoría legal.</p>
+
+    <form id="form">
+      <label>Mes de inicio
+        <select id="month" name="month">
+          <option value="0">enero</option>
+          <option value="1">febrero</option>
+          <option value="2">marzo</option>
+          <option value="3">abril</option>
+          <option value="4">mayo</option>
+          <option value="5">junio</option>
+          <option value="6">julio</option>
+          <option value="7">agosto</option>
+          <option value="8">septiembre</option>
+          <option value="9">octubre</option>
+          <option value="10">noviembre</option>
+          <option value="11">diciembre</option>
+        </select>
+      </label>
+      <label>Año de inicio
+        <input id="year" name="year" type="number" min="2024" max="2035" value="2026" />
+      </label>
+      <label>Días por semana
+        <select id="days" name="days">
+          <option>1</option><option>2</option><option selected>3</option>
+          <option>4</option><option>5</option><option>6</option>
+        </select>
+      </label>
+      <label>Pago por día (todo incluido)
+        <input id="dayPay" name="dayPay" type="number" min="0" step="1" value="58364" />
+      </label>
+      <label>Auxilio de transporte mensual
+        <input id="aux" name="aux" type="number" min="0" step="1" value="106755" />
+      </label>
+      <label>Salario mínimo mensual
+        <input id="smmlv" name="smmlv" type="number" min="0" step="1" value="1750905" />
+      </label>
+      <label>ARL (% riesgo I)
+        <input id="arl" name="arl" type="number" min="0" step="0.001" value="0.522" />
+      </label>
+      <label>Costo de cada dotación
+        <input id="kit" name="kit" type="number" min="0" step="1" value="150000" />
+      </label>
+      <label class="check">
+        <input id="salud" name="salud" type="checkbox" />
+        <span>También pago salud (8,5% mío y 4% de ella). Déjalo apagado si está en Sisbén o es beneficiaria de alguien: en el trabajo por días la UGPP no exige salud en ese caso.</span>
+      </label>
+      <div class="row-actions">
+        <button type="button" id="resetAux">Auxilio proporcional a los días</button>
+      </div>
+    </form>
+    <p class="hint" id="dayHint"></p>
+    <div class="warn" id="warn" hidden></div>
+
+    <div class="totals" id="totals"></div>
+    <p class="hint" id="baseLine" style="margin-top:10px"></p>
+
+    <section>
+      <h2>Flujo de caja mes a mes</h2>
+      <div id="months"></div>
+    </section>
+
+    <section>
+      <h2>Fechas clave</h2>
+      <ul class="dates" id="dates"></ul>
+    </section>
+
+    <section>
+      <h2>Quincenas</h2>
+      <details>
+        <summary>Ver las 24 quincenas</summary>
+        <p class="hint" style="margin:10px 0">Se paga un valor fijo por quincena (salario mensualizado), sin importar cuántos días caigan en ella. El auxilio va con la quincena de fin de mes. Salud y pensión de ella se descuentan por partes iguales.</p>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th class="num">Salario</th>
+                <th class="num">Descuento</th>
+                <th class="num">Auxilio</th>
+                <th class="num">Recibe</th>
+              </tr>
+            </thead>
+            <tbody id="quincenas"></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <section class="note">
+      <p>Simplificaciones: la prima usa el salario y el auxilio del mes, por los meses del semestre que cubre el contrato. Si el semestre está completo, la de diciembre es medio mes de salario más auxilio. La dotación entra en el mes 4, el 8 y el 12; el valor lo pones tú y se entrega en especie, no en dinero. Las vacaciones son 15 días de su jornal, solo sobre el pago por día, se causan en el año y aquí se pagan al cumplir los 12 meses. Las cesantías van al fondo el 14 de febrero siguiente; los intereses sí se los pagan a ella. En enero el salario mínimo cambia: estos 12 meses usan el mínimo que escribiste.</p>
+      <p style="margin-top:8px">Aportes de por días según la UGPP: de 1 a 7 días, 1 semana; de 8 a 14, 2; de 15 a 21, 3; más de 21, el mes completo. La base es el salario del mes o ese mínimo, el que sea mayor. Pensión 12% tuya y 4% de ella, caja 4% tuya, ARL el porcentaje que indiques. No hay SENA ni ICBF. Fuentes: UGPP, ABC de empleados domésticos, tarifas 2026.</p>
+    </section>
+  </main>
+  <script>
+    const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+    const $ = (id) => document.getElementById(id);
+    const money = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
+    const peso = (n) => Math.round(n);
+    const cop = (n) => money.format(peso(n));
+
+    const FULL_AUX = 249095;
+    let auxLock = false;
+
+    function num(id) {
+      const n = Number($(id).value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function suggestedAux(days) {
+      return Math.round(FULL_AUX * days / 7);
+    }
+
+    function lastDay(y, m) {
+      return new Date(y, m + 1, 0).getDate();
+    }
+
+    function dateLabel(y, m, d) {
+      return d + " de " + MESES[m] + " de " + y;
+    }
+
+    function contract(year, month) {
+      const out = [];
+      for (let i = 0; i < 12; i++) {
+        const dt = new Date(year, month + i, 1);
+        out.push({ n: i + 1, y: dt.getFullYear(), m: dt.getMonth() });
+      }
+      return out;
+    }
+
+    function compute() {
+      const year = num("year");
+      const month = num("month");
+      const days = num("days");
+      const dayPay = num("dayPay");
+      const aux = num("aux");
+      const smmlv = num("smmlv");
+      const arlRate = num("arl") / 100;
+      const kit = num("kit");
+      const salud = $("salud").checked;
+      const daysMonth = days * 30 / 7;
+      const salary = dayPay * daysMonth;
+      const weeks = daysMonth <= 7 ? 1 : daysMonth <= 14 ? 2 : daysMonth <= 21 ? 3 : 4;
+      const floor = weeks * smmlv / 4;
+      const ibc = Math.max(salary, floor);
+      const emp = {
+        salud: salud ? ibc * 0.085 : 0,
+        pension: ibc * 0.12,
+        arl: ibc * arlRate,
+        caja: ibc * 0.04,
+      };
+      emp.total = emp.salud + emp.pension + emp.arl + emp.caja;
+      const ded = ibc * 0.04 + (salud ? ibc * 0.04 : 0);
+      const net = salary - ded;
+      const months = contract(year, month);
+      const primaOf = (y, from, to) => (salary + aux) * months.filter((x) => x.y === y && x.m >= from && x.m <= to).length / 12;
+      const extras = months.map(() => ({ prima: 0, ces: 0, intereses: 0, kit: 0, vac: 0 }));
+      months.forEach((x, i) => {
+        if (x.n === 4 || x.n === 8 || x.n === 12) extras[i].kit = kit;
+        if (x.m === 5) extras[i].prima += primaOf(x.y, 0, 5);
+        if (x.m === 11) extras[i].prima += primaOf(x.y, 6, 11);
+      });
+      extras[11].vac = 15 * dayPay;
+      const later = [];
+      const years = [...new Set(months.map((x) => x.y))];
+      years.forEach((y) => {
+        const count = months.filter((x) => x.y === y).length;
+        const ces = (salary + aux) * count / 12;
+        const intereses = ces * 0.12 * (count / 12);
+        const due = months.findIndex((x) => x.y === y + 1 && x.m === 1);
+        if (due >= 0) {
+          extras[due].ces += ces;
+          extras[due].intereses += intereses;
+        } else {
+          later.push({ y: y + 1, ces, intereses, count });
+        }
+      });
+      const rows = months.map((x, i) => {
+        const e = extras[i];
+        const recibe = net + aux + e.prima + e.intereses + e.vac;
+        const total = salary + aux + emp.total + e.prima + e.ces + e.intereses + e.kit + e.vac;
+        return { ...x, ...e, recibe, total, net };
+      });
+      const sum = (k) => rows.reduce((a, r) => a + r[k], 0);
+      return {
+        daysMonth, salary, weeks, floor, ibc, emp, ded, net, aux, dayPay, smmlv, rows, later,
+        kit, salud,
+        out12: sum("total"),
+        hand12: sum("recibe"),
+        fund12: sum("ces"),
+        laterCes: later.reduce((a, x) => a + x.ces, 0),
+        laterInt: later.reduce((a, x) => a + x.intereses, 0),
+      };
+    }
+
+    function parts(r) {
+      const bits = [
+        ["salario", r.salary],
+        ["auxilio", r.aux],
+        ["aportes tuyos", r.emp],
+      ];
+      if (r.prima) bits.push(["prima", r.prima]);
+      if (r.intereses) bits.push(["intereses de cesantías", r.intereses]);
+      if (r.ces) bits.push(["cesantías al fondo", r.ces]);
+      if (r.kit) bits.push(["dotación en especie", r.kit]);
+      if (r.vac) bits.push(["vacaciones", r.vac]);
+      return bits.map(([name, value]) => name + " " + cop(value)).join(" · ");
+    }
+
+    function render() {
+      const c = compute();
+      const minDay = c.smmlv / 30;
+      $("dayHint").textContent = "El mínimo legal del día es " + cop(minDay) + " (mínimo ÷ 30). El pago por día es el jornal; la prima, las cesantías, los aportes y la dotación van aparte.";
+      const low = c.dayPay + 0.001 < minDay;
+      $("warn").hidden = !low;
+      $("warn").textContent = low ? "Ese pago por día está por debajo del mínimo legal (" + cop(minDay) + ")." : "";
+      const weekText = ["", "1 a 7 días: 1 semana", "8 a 14 días: 2 semanas", "15 a 21 días: 3 semanas", "más de 21 días: el mes completo"][c.weeks];
+      $("baseLine").textContent = "Días al mes: " + c.daysMonth.toFixed(1).replace(".", ",") + ". Cotización " + weekText + ". Base mínima " + cop(c.floor) + ". Salario del mes " + cop(c.salary) + ". Ingreso base " + cop(c.ibc) + ". De ese salario se descuentan " + cop(c.ded) + (c.salud ? " (salud 4% y pensión 4%)." : " (pensión 4%).");
+      $("totals").innerHTML = [
+        ["Sale de tu bolsillo en 12 meses", cop(c.out12), true],
+        ["Ella recibe en la mano", cop(c.hand12), false],
+        ["Promedio al mes", cop(c.out12 / 12), false],
+      ].map(([label, value, primary]) =>
+        '<article class="stat' + (primary ? " primary" : "") + '"><span>' + label + '</span><strong>' + value + '</strong></article>'
+      ).join("") + (c.laterCes
+        ? '<article class="stat" style="grid-column:1/-1"><span>Cesantías que se consignan después de estos 12 meses</span><strong>' + cop(c.laterCes) + '</strong><span>Intereses que se le pagan con ellas: ' + cop(c.laterInt) + '. No están en el total de arriba.</span></article>'
+        : "");
+      $("months").innerHTML = c.rows.map((r) =>
+        '<article class="month"><b>' + MESES[r.m] + " " + r.y + '</b><b>' + cop(r.total) + '</b><div class="why">' + parts({ ...r, emp: c.emp.total, aux: c.aux, salary: c.salary }) + '</div></article>'
+      ).join("");
+      const dates = [];
+      const first = c.rows[0];
+      dates.push([dateLabel(first.y, first.m, 1), "Inicio del contrato"]);
+      c.rows.forEach((r) => {
+        if (r.n === 4 || r.n === 8 || r.n === 12) dates.push([dateLabel(r.y, r.m, 1), "Dotación en especie, " + cop(r.kit)]);
+        if (r.prima && r.m === 5) dates.push(["30 de junio de " + r.y, "Prima de servicios, " + cop(r.prima)]);
+        if (r.prima && r.m === 11) dates.push(["20 de diciembre de " + r.y, "Prima de servicios, " + cop(r.prima)]);
+        if (r.ces) dates.push(["14 de febrero de " + r.y, "Cesantías al fondo " + cop(r.ces) + " e intereses para ella " + cop(r.intereses)]);
+      });
+      const end = c.rows[11];
+      dates.push([dateLabel(end.y, end.m, lastDay(end.y, end.m)), "Vacaciones al cumplir el año, si las toma: " + cop(end.vac)]);
+      c.later.forEach((x) => dates.push(["14 de febrero de " + x.y, "Cesantías de " + x.count + " meses, fuera de esta ventana: " + cop(x.ces) + " más intereses " + cop(x.intereses)]));
+      $("dates").innerHTML = dates.map(([when, what]) => "<li><time>" + when + "</time><span>" + what + "</span></li>").join("");
+      const q = [];
+      c.rows.forEach((r) => {
+        const halfNet = c.net / 2;
+        const halfDed = c.ded / 2;
+        const halfSal = c.salary / 2;
+        [[15, 0], [lastDay(r.y, r.m), c.aux]].forEach(([d, aux]) => {
+          q.push("<tr><td>" + dateLabel(r.y, r.m, d) + "</td><td class='num'>" + cop(halfSal) + "</td><td class='num'>" + cop(halfDed) + "</td><td class='num'>" + cop(aux) + "</td><td class='num'>" + cop(halfNet + aux) + "</td></tr>");
+        });
+      });
+      $("quincenas").innerHTML = q.join("");
+    }
+
+    $("form").addEventListener("input", (event) => {
+      if (event.target.id === "aux") auxLock = true;
+      if (event.target.id === "days" && !auxLock) $("aux").value = suggestedAux(num("days"));
+      render();
+    });
+    $("resetAux").addEventListener("click", () => {
+      auxLock = false;
+      $("aux").value = suggestedAux(num("days"));
+      render();
+    });
+    render();
+  </script>
+</body>
+</html>
